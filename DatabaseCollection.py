@@ -39,16 +39,28 @@ def db_close(cnx) -> None:
 
 '''
 Appends the Data Request to the database for future exploration.
+mySQL Version Recall our Table Setup long and hideous insertions.
+`allProdID`: int, `buyVolume`: int, 
+`sellVolume`: int, `sellOrders`: int,
+`buyOrders`: int, `buyPrice`: int,
+`sellPrice`,: int `buyMovingWeekly`: int, 
+`sellMovingWeekly`: int, `RoI`: int,
+`margin`: int, `reliability`: int,
+`avgVolume`: int, `event`: int,
+`datetime`,: dt, `productName`: str
 '''
 
 
 def update_dld_data(data: dict) -> bool:
+    # Open DB and get our cursor
     db = db_open()
     cursor = db["Cursor"]
 
+    # This is used to clean up the product names from the api call
     with open("scuffedNames.json", 'r') as file:
         scuffNames = json.load(file)
 
+    # Long winded SQL you'll like SQLAlchemy more
     SQL = "INSERT INTO `allproducts` " \
           "(`allProdID`, `buyVolume`, `sellVolume`, `sellOrders`, `buyOrders`, `buyPrice`, `sellPrice`, " \
           "`buyMovingWeekly`, `sellMovingWeekly`, `RoI`, `margin`, `reliability`, `avgVolume`, `event`, `datetime`," \
@@ -57,7 +69,7 @@ def update_dld_data(data: dict) -> bool:
 
     currentTime = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-
+    # Handle the Data from the API call.
     for product in data:
 
         if product in scuffNames:
@@ -80,9 +92,9 @@ def update_dld_data(data: dict) -> bool:
                       int(product['event']),
                       currentTime,
                       productName)
-
+            # This is our SQL statment being sent.
             cursor.execute(SQL, inputs)
-    
+    # Close DB
     db_close(db["Connection"])
     return True
 
@@ -95,7 +107,8 @@ Error catching is there just in case (Nothing has or should ever prompt an error
 def run_db() -> None:
     while True:
         try:
-
+            # Model Files created by running models64Bit.py in ./Models
+            # Your PC may differ so building the models the first time around is necessary for this sample.
             files = ["models/abc.sav", "models/bagging.sav", "models/extratrees.sav", "models/KNN.sav",
                      "models/randomforest.sav", "models/gradientboosting.sav"]
             # Get Data from API Call
@@ -105,12 +118,14 @@ def run_db() -> None:
             update_dld_data(data=currentData)
 
             print("DB Update Completed on ", datetime.now())
-
+            # Do this every 2 minutes
             time.sleep(120)
+
+        # There was a ValueError occuring with my python.request() call that was resolved by switching to a session
         except ValueError:
 
             run_db()
 
-
+# Get to work!
 if __name__ == '__main__':
     run_db()
